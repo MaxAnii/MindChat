@@ -13,12 +13,38 @@ datasource db {
 }
 
 model User {
-  id       Int       @id @default(autoincrement())
-  email    String    @unique
-  name     String?
-  imageURL String?
-  about    String?
-  contacts Contact[]
+  id          Int          @id @default(autoincrement())
+  email       String       @unique
+  name        String?
+  imageURL    String?
+  about       String?
+  isVerified  Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  // relations
+  magicTokens MagicToken[]
+  sessions    Session[]
+  contacts    Contact[]
+}
+
+model MagicToken {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  tokenHash String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Session {
+  id               Int      @id @default(autoincrement())
+  user             User     @relation(fields: [userId], references: [id])
+  userId           Int
+  refreshTokenHash String   @unique
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+  revoked          Boolean  @default(false)
 }
 
 model Contact {

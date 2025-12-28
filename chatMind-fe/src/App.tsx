@@ -8,6 +8,7 @@ import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
 import VerifyToken from "./pages/verifyToken";
 import Landing from "./pages/Landing";
+import PrivateRoute from "./components/PrivateRoute";
 
 const queryClient = new QueryClient();
 
@@ -22,7 +23,14 @@ const App = () => (
 					<Route path="/auth" element={<Auth />} />
 					<Route path="/verify-token/:token" element={<VerifyToken />} />
 
-					<Route path="/chat" element={<Chat />} />
+					<Route
+						path="/chat"
+						element={
+							<PrivateRoute>
+								<Chat />
+							</PrivateRoute>
+						}
+					/>
 
 					<Route path="*" element={<NotFound />} />
 				</Routes>

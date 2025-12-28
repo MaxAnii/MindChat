@@ -24,7 +24,11 @@ model User {
   // relations
   magicTokens MagicToken[]
   sessions    Session[]
-  contacts    Contact[]
+  contactsAsA Contact[]    @relation("UserContactsA")
+  contactsAsB Contact[]    @relation("UserContactsB")
+
+  sentMessages     Message[] @relation("MessageSender")
+  receivedMessages Message[] @relation("MessageReceiver")
 }
 
 model MagicToken {
@@ -48,9 +52,35 @@ model Session {
 }
 
 model Contact {
-  id     Int  @id @default(autoincrement())
-  user   User @relation(fields: [userId], references: [id])
-  userId Int
+  id        Int      @id @default(autoincrement())
+  userAId   Int
+  userBId   Int
+  userA     User     @relation("UserContactsA", fields: [userAId], references: [id])
+  userB     User     @relation("UserContactsB", fields: [userBId], references: [id])
+  createdAt DateTime @default(now())
+
+  roomChatId Message[] @relation("roomChatId")
+
+  @@unique([userAId, userBId])
+  @@index([userAId])
+  @@index([userBId])
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  roomChatId Int
+  senderId   Int
+  receiverId Int
+  content    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  chat     Contact @relation("roomChatId", fields: [roomChatId], references: [id])
+  sender   User    @relation("MessageSender", fields: [senderId], references: [id])
+  receiver User    @relation("MessageReceiver", fields: [receiverId], references: [id])
+
+  @@index([senderId])
+  @@index([receiverId])
 }
 
 model verificationToken {

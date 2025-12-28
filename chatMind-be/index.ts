@@ -1,8 +1,10 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import authRoutes from "./routes/authRoutes";
 import dotenv from "dotenv";
+import authRoutes from "./routes/authRoutes";
+import userRoutes from "./routes/userRoutes";
+import chatRoutes from "./routes/chatRoutes";
 
 dotenv.config();
 const app = express();
@@ -21,6 +23,8 @@ app.use(
 );
 
 app.use("/auth", authRoutes);
+app.use("/user", userRoutes);
+app.use("/chat", chatRoutes);
 
 app.listen(port, () => {
 	console.log(`Server is running on port ${port}`);

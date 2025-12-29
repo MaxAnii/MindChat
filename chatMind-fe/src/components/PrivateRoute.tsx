@@ -22,7 +22,6 @@ const PrivateRoute = ({ children }: PrivateRouteProps) => {
 		if (error) {
 			return navigate("/auth");
 		}
-		console.log(isLoading, error);
 	}, [data, isLoading, error]);
 	return <>{isLoading ? <div>Loading...</div> : children}</>;
 };

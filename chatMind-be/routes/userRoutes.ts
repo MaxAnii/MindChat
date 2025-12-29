@@ -60,7 +60,7 @@ router.get(
 				return res.status(400).json({ message: "You cannot search yourself" });
 			}
 
-			const user = await prisma.user.findFirst({
+			const user = await prisma.user.findMany({
 				where: {
 					email,
 					OR: [

@@ -4,22 +4,21 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { useMutation } from "@tanstack/react-query";
 import api from "@/utils/axios";
-import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
 const SignIn = () => {
-	const navigate = useNavigate();
 	const { toast } = useToast();
-
 	const [email, setEmail] = useState("");
 	const loginMutation = useMutation({
 		mutationFn: async (payload: { email: string }) => {
 			const res = await api.post("/auth/sign-in", { email });
 			return res.data;
 		},
-
 		onSuccess: () => {
-			navigate("/chat");
+			toast({
+				title: "Sign In Successful",
+				description: "Check your email for the sign-in link.",
+			});
 		},
 
 		onError: () => {
@@ -32,9 +31,9 @@ const SignIn = () => {
 	});
 	const handleSignIn = (e: React.FormEvent) => {
 		e.preventDefault();
-		const data = loginMutation.mutate({ email });
-		console.log(data);
+		loginMutation.mutate({ email });
 	};
+
 	return (
 		<form className="space-y-4" onSubmit={handleSignIn}>
 			<div className="space-y-2">

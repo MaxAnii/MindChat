@@ -60,9 +60,12 @@ router.get(
 				return res.status(400).json({ message: "You cannot search yourself" });
 			}
 
-			const user = await prisma.user.findMany({
+			const users = await prisma.user.findMany({
 				where: {
-					email,
+					email: {
+						contains: email,
+						mode: "insensitive", // LIKE %email% (case-insensitive)
+					},
 					OR: [
 						{
 							contactsAsA: {
@@ -88,13 +91,13 @@ router.get(
 				},
 			});
 
-			if (!user) {
+			if (!users) {
 				return res.status(404).json({
 					message: "No associated contact found",
 				});
 			}
 
-			return res.status(200).json({ user });
+			return res.status(200).json({ users });
 		} catch (err) {
 			console.error("Search contact error:", err);
 			return res.status(500).json({ message: "Internal server error" });

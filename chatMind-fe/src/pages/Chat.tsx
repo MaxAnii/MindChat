@@ -2,17 +2,26 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Send, Sparkles, LogOut, Menu, User } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Send } from "lucide-react";
 import ChatSerachBar from "@/components/chat/ChatSerachBar";
 import Workspace from "@/components/chat/WorkSpace";
 import SearchUser from "@/components/chat/SerachUser";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/utils/axios";
 
 const Chat = () => {
 	const [message, setMessage] = useState("");
 
+	const { data, isLoading, isError } = useQuery({
+		queryKey: ["messages"],
+		queryFn: async () => {
+			const res = await api.get("/chat/contacts-list");
+			return res.data;
+		},
+	});
+
+	console.log({ data, isLoading, isError });
 	const handleSendMessage = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!message.trim()) return;
@@ -45,19 +54,20 @@ const Chat = () => {
 						</p>
 
 						<div className="space-y-1">
-							{[1, 2, 3].map((i) => (
+							{data?.contacts?.map((i) => (
 								<div
 									key={i}
 									className="flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer hover:bg-muted transition"
 								>
-									<Avatar className="h-8 w-8">
-										<AvatarFallback>U{i}</AvatarFallback>
-									</Avatar>
+									<img
+										src={i.imageURL}
+										className="bg-gray-200 border-2 border-dashed rounded-xl w-10 h-10"
+									/>
 
 									<div className="flex-1 min-w-0">
-										<p className="text-sm font-medium truncate">User {i}</p>
+										<p className="text-sm font-medium truncate">{i.name}</p>
 										<p className="text-xs text-muted-foreground truncate">
-											Last message preview...
+											{i.lastMessage.content}
 										</p>
 									</div>
 

@@ -4,11 +4,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Auth from "./pages/Auth";
-import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
 import VerifyToken from "./pages/verifyToken";
 import Landing from "./pages/Landing";
 import PrivateRoute from "./components/PrivateRoute";
+import Chat from "./pages/Chat";
+import DirectMessage from "./pages/DirectMessage";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,14 @@ const App = () => (
 						element={
 							<PrivateRoute>
 								<Chat />
+							</PrivateRoute>
+						}
+					/>
+					<Route
+						path="/chat/:reciverId/:roomId"
+						element={
+							<PrivateRoute>
+								<DirectMessage />
 							</PrivateRoute>
 						}
 					/>

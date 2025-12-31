@@ -62,6 +62,8 @@ router.get(
 							id: true,
 							name: true,
 							imageURL: true,
+							email: true,
+							about: true,
 						},
 					},
 					userB: {
@@ -69,12 +71,15 @@ router.get(
 							id: true,
 							name: true,
 							imageURL: true,
+							email: true,
+							about: true,
 						},
 					},
 					roomChatId: {
 						orderBy: { createdAt: "desc" },
-						take: 1, // 👈 last message only
+						take: 1, //  last message only
 						select: {
+							roomChatId: true,
 							content: true,
 							createdAt: true,
 							senderId: true,
@@ -94,6 +99,8 @@ router.get(
 					name: otherUser.name,
 					imageURL: otherUser.imageURL,
 					lastMessage: contact.roomChatId[0] || null,
+					email: otherUser.email,
+					about: otherUser.about,
 				};
 			});
 

@@ -25,7 +25,13 @@ router.post(
 			let user = await prisma.user.findUnique({ where: { email } });
 			if (!user) {
 				user = await prisma.user.create({
-					data: { email, name: firstName + " " + lastName, about: " " },
+					data: {
+						email,
+						name: firstName + " " + lastName,
+						about: " ",
+						imageURL:
+							"https://img.icons8.com/?size=100&id=z-JBA_KtSkxG&format=png&color=000000",
+					},
 				});
 			}
 

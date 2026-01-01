@@ -25,7 +25,9 @@ router.post(
 					email,
 					name,
 					about,
-					imageURL,
+					imageURL: imageURL
+						? imageURL
+						: "https://img.icons8.com/?size=100&id=z-JBA_KtSkxG&format=png&color=000000",
 				},
 			});
 

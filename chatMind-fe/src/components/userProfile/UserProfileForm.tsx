@@ -48,7 +48,7 @@ const UserProfileForm = () => {
 
 	const profileMutation = useMutation({
 		mutationFn: async (payload: UserProfile) => {
-			const { data } = await api.post("/user/update-profile", payload);
+			const { data } = await api.post("/user/profile/update", payload);
 			return data;
 		},
 		onSuccess: () => {

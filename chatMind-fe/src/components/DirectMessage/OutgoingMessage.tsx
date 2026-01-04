@@ -1,4 +1,3 @@
-import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Card } from "../ui/card";
 
 const OutgoingMessage = ({

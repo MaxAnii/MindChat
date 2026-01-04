@@ -88,7 +88,7 @@ router.get(
 				},
 			});
 
-			// 🔄 Normalize response for UI
+			//  Normalize response for UI
 			const formattedContacts = contacts.map((contact) => {
 				const isUserA = contact.userAId === userId;
 				const otherUser = isUserA ? contact.userB : contact.userA;
@@ -107,6 +107,60 @@ router.get(
 			return res.status(200).json({ contacts: formattedContacts });
 		} catch (error) {
 			console.error("Error fetching contacts list:", error);
+			return res.status(500).json({ error: "Internal server error" });
+		}
+	}
+);
+
+// Get message history for a room
+router.get(
+	"/messages/:roomChatId",
+	authMiddleware,
+	async (req: Request, res: Response) => {
+		try {
+			const { roomChatId } = req.params;
+			const userId = req?.userId;
+
+			if (!userId) {
+				return res.status(401).json({ error: "Unauthorized" });
+			}
+
+			// Verify user has access to this room
+			const room = await prisma.contact.findUnique({
+				where: { id: parseInt(roomChatId) },
+			});
+
+			if (!room || (room.userAId !== userId && room.userBId !== userId)) {
+				return res
+					.status(403)
+					.json({ error: "Forbidden: No access to this room" });
+			}
+
+			const messages = await prisma.message.findMany({
+				where: { roomChatId: parseInt(roomChatId) },
+				include: {
+					sender: {
+						select: {
+							id: true,
+							name: true,
+							email: true,
+						},
+					},
+					receiver: {
+						select: {
+							id: true,
+							name: true,
+							email: true,
+						},
+					},
+				},
+				orderBy: { createdAt: "asc" },
+				take: 100, // Limit messages to last 100
+			});
+
+			return res.status(200).json(messages);
+		} catch (error) {
+			console.error("Error fetching messages:", error);
 			return res.status(500).json({ error: "Internal server error" });
 		}
 	}

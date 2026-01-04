@@ -5,7 +5,8 @@
 	"scripts": {
 		"dev": "ts-node-dev --respawn --transpile-only index.ts",
 		"build": "tsc",
-		"start": "node dist/index.js"
+		"start": "node dist/index.js",
+		"consumer": "ts-node-dev --respawn --transpile-only consumer.ts"
 	},
 	"keywords": [],
 	"author": "",
@@ -14,16 +15,23 @@
 	"dependencies": {
 		"@prisma/adapter-pg": "^7.1.0",
 		"@prisma/client": "^7.1.0",
+		"@socket.io/redis-adapter": "^8.3.0",
 		"@types/nodemailer": "^7.0.4",
 		"cookie-parser": "^1.4.7",
 		"cors": "^2.8.5",
 		"dotenv": "^17.2.3",
 		"express": "^5.2.1",
 		"express-rate-limit": "^8.2.1",
+		"ioredis": "^5.3.2",
 		"jsonwebtoken": "^9.0.3",
+		"kafkajs": "^2.2.4",
 		"nodemailer": "^7.0.11",
 		"pg": "^8.16.3",
-		"resend": "^6.5.2"
+		"redis": "^5.10.0",
+		"resend": "^6.5.2",
+		"socket.io": "^4.8.3",
+		"socket.io-client": "^4.8.3",
+		"socket.io-redis": "^5.4.0"
 	},
 	"devDependencies": {
 		"@types/cookie-parser": "^1.4.3",
@@ -32,6 +40,8 @@
 		"@types/jsonwebtoken": "^9.0.1",
 		"@types/node": "^24.10.1",
 		"@types/pg": "^8.15.6",
+		"@types/redis": "^4.0.10",
+		"@types/socket.io-redis": "^1.0.27",
 		"prisma": "^7.1.0",
 		"ts-node": "^10.9.2",
 		"ts-node-dev": "^2.0.0",

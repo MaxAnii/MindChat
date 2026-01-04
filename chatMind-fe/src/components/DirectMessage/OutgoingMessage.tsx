@@ -10,16 +10,15 @@ const OutgoingMessage = ({
 }) => {
 	return (
 		<div className="flex justify-end gap-3 items-center">
-			<div className="text-right">
-				<Card className="mt-1 p-3 max-w-xl">
-					<p className="text-sm">{message}</p>
-				</Card>
-				<p className="text-xs text-muted-foreground mt-1">{MessageTime}</p>
+			<div>
+				<div className="flex items-center gap-2">
+					<Card className="p-2 max-w-xl shadow-soft flex gap-1.5 items-end justify-end">
+						<p className=" ">{message}</p>
+						<div className="text-xs text-gray-500  ">{MessageTime}</div>
+					</Card>
+					<div className="h-3 w-3 rounded-full bg-primary" />
+				</div>
 			</div>
-
-			<Avatar className="h-8 w-8">
-				<AvatarFallback>ME</AvatarFallback>
-			</Avatar>
 		</div>
 	);
 };

@@ -68,8 +68,6 @@ const ChatLayout = ({ children }: { children: React.ReactNode }) => {
 											{i.lastMessage.content}
 										</p>
 									</div>
-
-									<div className="h-2 w-2 rounded-full bg-primary" />
 								</div>
 							))}
 						</div>

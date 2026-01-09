@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import prisma from "../lib/prisma";
 import authMiddleware from "../middleware/authMiddleware";
+import { searchMessages } from "../lib/pineconeClient";
 
 const router = Router();
 
@@ -161,6 +162,85 @@ router.get(
 			return res.status(200).json(messages);
 		} catch (error) {
 			console.error("Error fetching messages:", error);
+			return res.status(500).json({ error: "Internal server error" });
+		}
+	}
+);
+
+// Semantic search for messages in a room
+router.get(
+	"/search/:roomChatId/:query",
+	authMiddleware,
+	async (req: Request, res: Response) => {
+		try {
+			const { roomChatId, query } = req.params;
+			const topK = "10";
+			const userId = req?.userId;
+
+			if (!userId) {
+				return res.status(401).json({ error: "Unauthorized" });
+			}
+
+			if (!roomChatId || !query) {
+				return res
+					.status(400)
+					.json({ error: "roomChatId and q (query) are required" });
+			}
+
+			const roomId = parseInt(roomChatId as string);
+			const topKNum = parseInt(topK as string, 10);
+
+			// Verify user has access to this room
+			const room = await prisma.contact.findUnique({
+				where: { id: roomId },
+			});
+
+			if (!room || (room.userAId !== userId && room.userBId !== userId)) {
+				return res
+					.status(403)
+					.json({ error: "Forbidden: No access to this room" });
+			}
+
+			// Search Pinecone for similar messages
+			const searchResults = await searchMessages(
+				roomId,
+				query as string,
+				topKNum
+			);
+			console.log("Search query:", query);
+			console.log("Search results:", searchResults);
+
+			// Fetch full message details from DB
+			const messageIds = searchResults.map((r) => r.messageId);
+			const messages = await prisma.message.findMany({
+				where: {
+					id: { in: messageIds },
+					roomChatId: roomId,
+				},
+				include: {
+					sender: {
+						select: { id: true, name: true, email: true },
+					},
+					receiver: {
+						select: { id: true, name: true, email: true },
+					},
+				},
+			});
+
+			// Combine with scores
+			const results = searchResults
+				.map((result) => {
+					const message = messages.find((m) => m.id === result.messageId);
+					return {
+						...message,
+						score: result.score,
+					};
+				})
+				.filter(Boolean); // Remove any nulls
+
+			return res.status(200).json({ results });
+		} catch (error) {
+			console.error("Error searching messages:", error);
 			return res.status(500).json({ error: "Internal server error" });
 		}
 	}

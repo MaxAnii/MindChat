@@ -90,3 +90,51 @@ export const upsertMessageEmbedding = async (
 		// Don't throw — allow message save to continue
 	}
 };
+
+/**
+ * Search for similar messages in a specific room.
+ * @param roomChatId - Filter to this conversation
+ * @param query - Search query string
+ * @param topK - Number of results to return
+ * @param minScore - Minimum similarity score (0-1), default 0.3
+ * @returns Array of { messageId, score, metadata }
+ */
+export const searchMessages = async (
+	roomChatId: number,
+	query: string,
+	topK: number = 10,
+	minScore: number = 0.3
+) => {
+	try {
+		const queryEmbedding = await generateEmbedding(query);
+		const index = pc.index(INDEX_NAME);
+
+		const response = await index.query({
+			vector: queryEmbedding,
+			topK: topK * 2, // Query more to filter by score threshold
+			filter: {
+				roomChatId: { $eq: roomChatId },
+			},
+			includeMetadata: true,
+		});
+
+		// Filter by minimum similarity score and limit to topK
+		const filteredResults =
+			response.matches
+				?.filter((match) => (match.score || 0) >= minScore)
+				.slice(0, topK)
+				.map((match) => ({
+					messageId: match.metadata?.messageId as number,
+					score: match.score || 0,
+					metadata: match.metadata,
+				})) || [];
+
+		console.log(
+			`Found ${filteredResults.length} semantically similar messages (min score: ${minScore})`
+		);
+		return filteredResults;
+	} catch (error) {
+		console.error("Failed to search messages:", error);
+		return [];
+	}
+};

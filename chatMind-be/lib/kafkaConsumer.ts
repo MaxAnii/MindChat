@@ -1,5 +1,6 @@
 import { Kafka } from "kafkajs";
 import prisma from "./prisma";
+import { upsertMessageEmbedding } from "./pineconeClient";
 
 const kafka = new Kafka({
 	clientId: "chatmind-consumer",
@@ -36,6 +37,14 @@ export const connectConsumer = async () => {
 				});
 
 				console.log("Message saved to DB:", savedMessage.id);
+
+				// Upsert embedding to Pinecone for semantic search
+				await upsertMessageEmbedding(savedMessage.id, savedMessage.content, {
+					roomChatId: savedMessage.roomChatId,
+					senderId: savedMessage.senderId,
+					receiverId: savedMessage.receiverId,
+					createdAt: savedMessage.createdAt.toISOString(),
+				});
 			} catch (error) {
 				console.error("Error processing message:", error);
 			}

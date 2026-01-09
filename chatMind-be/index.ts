@@ -8,6 +8,7 @@ import userRoutes from "./routes/userRoutes";
 import chatRoutes from "./routes/chatRoutes";
 import { initializeSocketIO } from "./lib/socket";
 import { connectProducer } from "./lib/kafka";
+import { initializePinecone } from "./lib/pinecone";
 
 dotenv.config();
 const app = express();
@@ -25,6 +26,15 @@ app.use(
 		credentials: true,
 	})
 );
+
+// Initialize Pinecone
+initializePinecone()
+	.then(() => {
+		console.log("Pinecone initialized");
+	})
+	.catch((err) => {
+		console.error("Failed to initialize Pinecone:", err);
+	});
 
 // Initialize Socket.IO
 initializeSocketIO(httpServer);

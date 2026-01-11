@@ -120,6 +120,7 @@ router.get(
 	async (req: Request, res: Response) => {
 		try {
 			const { roomChatId } = req.params;
+			const { around } = req.query;
 			const userId = req?.userId;
 
 			if (!userId) {
@@ -137,27 +138,77 @@ router.get(
 					.json({ error: "Forbidden: No access to this room" });
 			}
 
-			const messages = await prisma.message.findMany({
-				where: { roomChatId: parseInt(roomChatId) },
-				include: {
-					sender: {
-						select: {
-							id: true,
-							name: true,
-							email: true,
+			let messages;
+
+			// If `around` parameter is provided, load messages around that ID
+			if (around) {
+				const messageId = parseInt(around as string);
+
+				// Get the target message to find its timestamp
+				const targetMessage = await prisma.message.findUnique({
+					where: { id: messageId },
+				});
+
+				if (!targetMessage) {
+					return res.status(404).json({ error: "Message not found" });
+				}
+
+				// Load 50 messages before and 50 after the target message
+				messages = await prisma.message.findMany({
+					where: { roomChatId: parseInt(roomChatId) },
+					include: {
+						sender: {
+							select: {
+								id: true,
+								name: true,
+								email: true,
+							},
+						},
+						receiver: {
+							select: {
+								id: true,
+								name: true,
+								email: true,
+							},
 						},
 					},
-					receiver: {
-						select: {
-							id: true,
-							name: true,
-							email: true,
+					orderBy: { createdAt: "asc" },
+					skip: 0,
+					take: 101, // 50 before, target message, 50 after
+				});
+
+				// Filter to get messages around the target
+				const targetIndex = messages.findIndex((m) => m.id === messageId);
+
+				if (targetIndex !== -1) {
+					const start = Math.max(0, targetIndex - 50);
+					const end = Math.min(messages.length, targetIndex + 51);
+					messages = messages.slice(start, end);
+				}
+			} else {
+				// Default behavior: load last 100 messages
+				messages = await prisma.message.findMany({
+					where: { roomChatId: parseInt(roomChatId) },
+					include: {
+						sender: {
+							select: {
+								id: true,
+								name: true,
+								email: true,
+							},
+						},
+						receiver: {
+							select: {
+								id: true,
+								name: true,
+								email: true,
+							},
 						},
 					},
-				},
-				orderBy: { createdAt: "asc" },
-				take: 100, // Limit messages to last 100
-			});
+					orderBy: { createdAt: "asc" },
+					take: 100, // Limit messages to last 100
+				});
+			}
 
 			return res.status(200).json(messages);
 		} catch (error) {

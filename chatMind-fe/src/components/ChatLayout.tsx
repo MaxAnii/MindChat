@@ -6,7 +6,17 @@ import api from "@/utils/axios";
 import { useNavigate } from "react-router-dom";
 import useReciverData from "@/hooks/use-reciver-data";
 
-const ChatLayout = ({ children }: { children: React.ReactNode }) => {
+interface ChatLayoutProps {
+	children: React.ReactNode;
+	roomChatId?: number;
+	onSearchResultClick?: (messageId: number) => void;
+}
+
+const ChatLayout = ({
+	children,
+	roomChatId,
+	onSearchResultClick,
+}: ChatLayoutProps) => {
 	const navigate = useNavigate();
 	const { setReceiverData } = useReciverData();
 	const { data, isLoading, isError } = useQuery({
@@ -31,7 +41,14 @@ const ChatLayout = ({ children }: { children: React.ReactNode }) => {
 	return (
 		<>
 			<div className=" bg-blue-200/50  py-1 flex items-center px-4 justify-between h-12">
-				<ChatSerachBar />
+				{roomChatId && onSearchResultClick ? (
+					<ChatSerachBar
+						roomChatId={roomChatId}
+						onResultClick={onSearchResultClick}
+					/>
+				) : (
+					<ChatSerachBar roomChatId={1} />
+				)}
 			</div>
 			<div className="h-[calc(100vh-3rem)] flex overflow-hidden bg-background">
 				{/* Workspace Bar (Slack-style left rail) */}

@@ -7,14 +7,19 @@ import dotenv from "dotenv";
 dotenv.config();
 const router = Router();
 
+interface AuthRequest extends Request {
+	userId?: string;
+	userEmail?: string;
+}
+
 // Update user profile
 router.post(
 	"/profile/update",
 	authMiddleware,
-	async (req: Request, res: Response) => {
+	async (req: AuthRequest, res: Response) => {
 		try {
 			const { email, name, about, imageURL } = req.body;
-			const userId = req?.userId;
+			const userId = req?.userId ? parseInt(req.userId) : undefined;
 			if (!userId) {
 				return res.status(401).json({ error: "Unauthorized" });
 			}
@@ -44,11 +49,11 @@ router.post(
 router.get(
 	"/search/new-contacts/:email",
 	authMiddleware,
-	async (req: Request, res: Response) => {
+	async (req: AuthRequest, res: Response) => {
 		try {
 			const { email } = req.params;
-			const currentUserId = req.userId;
-			const currentUserEmail = req.userEmail;
+			const currentUserId = req?.userId ? parseInt(req.userId) : undefined;
+			const currentUserEmail = req?.userEmail;
 
 			if (!currentUserId) {
 				return res.status(401).json({ message: "Unauthorized" });
@@ -68,7 +73,7 @@ router.get(
 						contains: email,
 						mode: "insensitive", // LIKE %email% (case-insensitive)
 					},
-					OR: [
+					NOT: [
 						{
 							contactsAsA: {
 								some: {
@@ -93,9 +98,9 @@ router.get(
 				},
 			});
 
-			if (!users) {
-				return res.status(404).json({
-					message: "No associated contact found",
+			if (!users || users.length === 0) {
+				return res.status(204).json({
+					message: "No users found",
 				});
 			}
 

@@ -1,17 +1,14 @@
 import ChatSerachBar from "@/components/chat/ChatSerachBar";
 import Workspace from "@/components/chat/WorkSpace";
 import SearchUser from "@/components/chat/SerachUser";
-import { useQuery } from "@tanstack/react-query";
-import api from "@/utils/axios";
 import { useNavigate } from "react-router-dom";
 import useReciverData from "@/hooks/use-reciver-data";
-import { useState } from "react";
-import useDebounce from "@/hooks/use-debounce";
+import { ReceiverData } from "@/contextAPI/reciverDataContext";
 
 interface ChatLayoutProps {
 	children: React.ReactNode;
 	roomChatId?: number;
-	onSearchResultClick?: (messageId: number) => void;
+	onSearchResultClick?: (messageId: number) => Promise<void>;
 }
 
 const ChatLayout = ({
@@ -20,28 +17,9 @@ const ChatLayout = ({
 	onSearchResultClick,
 }: ChatLayoutProps) => {
 	const navigate = useNavigate();
-	const { setReceiverData } = useReciverData();
-	const [queryKey, setQueryKey] = useState("");
-	const debouncedQuery = useDebounce(queryKey, 2000);
-
-	const { data, isLoading, isError } = useQuery({
-		queryKey: ["messages", debouncedQuery],
-		queryFn: async () => {
-			const res = await api.get(
-				`/chat/contacts-list?userQuery=${debouncedQuery}`
-			);
-			return res.data;
-		},
-	});
+	const { setQueryKey, contactsList } = useReciverData();
 
 	const handleDMNavigation = (userData) => {
-		setReceiverData({
-			id: userData.userId,
-			email: userData.email,
-			name: userData.name,
-			about: userData.about,
-			imageURL: userData.imageURL,
-		});
 		navigate(`/chat/${userData.userId}/${userData.contactId}`);
 	};
 
@@ -75,21 +53,21 @@ const ChatLayout = ({
 						</p>
 
 						<div className="space-y-1">
-							{data?.contacts?.map((i) => (
+							{contactsList?.contacts?.map((i: ReceiverData) => (
 								<div
-									key={i}
+									key={i.email}
 									className="flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer hover:bg-muted transition"
 									onClick={() => handleDMNavigation(i)}
 								>
 									<img
-										src={i.imageURL}
+										src={i?.imageURL}
 										className="bg-gray-200 border-2 border-dashed rounded-xl w-10 h-10"
 									/>
 
 									<div className="flex-1 min-w-0">
 										<p className="text-sm font-medium truncate">{i.name}</p>
 										<p className="text-xs text-muted-foreground truncate">
-											{i.lastMessage.content}
+											{i?.lastMessage?.content}
 										</p>
 									</div>
 								</div>

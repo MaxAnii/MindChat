@@ -10,42 +10,46 @@ import Landing from "./pages/Landing";
 import PrivateRoute from "./components/PrivateRoute";
 import Chat from "./pages/Chat";
 import DirectMessage from "./pages/DirectMessage";
+import { ReciverDataProvider } from "./contextAPI/reciverDataContext";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-	<QueryClientProvider client={queryClient}>
-		<TooltipProvider>
-			<Toaster />
-			<Sonner />
-			<BrowserRouter>
-				<Routes>
-					<Route path="/" element={<Landing />} />
-					<Route path="/auth" element={<Auth />} />
-					<Route path="/verify-token/:token" element={<VerifyToken />} />
+const App = () => {
+	return (
+		<QueryClientProvider client={queryClient}>
+			<ReciverDataProvider>
+				<TooltipProvider>
+					<Toaster />
+					<Sonner />
 
-					<Route
-						path="/chat"
-						element={
-							<PrivateRoute>
-								<Chat />
-							</PrivateRoute>
-						}
-					/>
-					<Route
-						path="/chat/:reciverId/:roomId"
-						element={
-							<PrivateRoute>
-								<DirectMessage />
-							</PrivateRoute>
-						}
-					/>
+					<Routes>
+						<Route path="/" element={<Landing />} />
+						<Route path="/auth" element={<Auth />} />
+						<Route path="/verify-token/:token" element={<VerifyToken />} />
 
-					<Route path="*" element={<NotFound />} />
-				</Routes>
-			</BrowserRouter>
-		</TooltipProvider>
-	</QueryClientProvider>
-);
+						<Route
+							path="/chat"
+							element={
+								<PrivateRoute>
+									<Chat />
+								</PrivateRoute>
+							}
+						/>
+						<Route
+							path="/chat/:reciverId/:roomId"
+							element={
+								<PrivateRoute>
+									<DirectMessage />
+								</PrivateRoute>
+							}
+						/>
+
+						<Route path="*" element={<NotFound />} />
+					</Routes>
+				</TooltipProvider>
+			</ReciverDataProvider>
+		</QueryClientProvider>
+	);
+};
 
 export default App;

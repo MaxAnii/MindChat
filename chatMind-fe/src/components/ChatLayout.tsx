@@ -5,6 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import api from "@/utils/axios";
 import { useNavigate } from "react-router-dom";
 import useReciverData from "@/hooks/use-reciver-data";
+import { useState } from "react";
+import useDebounce from "@/hooks/use-debounce";
 
 interface ChatLayoutProps {
 	children: React.ReactNode;
@@ -19,10 +21,15 @@ const ChatLayout = ({
 }: ChatLayoutProps) => {
 	const navigate = useNavigate();
 	const { setReceiverData } = useReciverData();
+	const [queryKey, setQueryKey] = useState("");
+	const debouncedQuery = useDebounce(queryKey, 2000);
+
 	const { data, isLoading, isError } = useQuery({
-		queryKey: ["messages"],
+		queryKey: ["messages", debouncedQuery],
 		queryFn: async () => {
-			const res = await api.get("/chat/contacts-list");
+			const res = await api.get(
+				`/chat/contacts-list?userQuery=${debouncedQuery}`
+			);
 			return res.data;
 		},
 	});
@@ -59,7 +66,7 @@ const ChatLayout = ({
 				{/* Channels / DM Sidebar */}
 				<aside className="w-72 border-l border-t rounded-l-md  border-border bg-muted/30 flex flex-col">
 					{/* Sidebar Header */}
-					<SearchUser />
+					<SearchUser setQueryKey={setQueryKey} />
 
 					{/* Channels / DMs */}
 					<div className="flex-1 overflow-y-auto px-2">

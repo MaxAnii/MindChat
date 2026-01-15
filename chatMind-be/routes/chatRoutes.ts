@@ -3,15 +3,19 @@ import prisma from "../lib/prisma";
 import authMiddleware from "../middleware/authMiddleware";
 import { searchMessages } from "../lib/pineconeClient";
 
+interface AuthRequest extends Request {
+	userId?: string;
+}
+
 const router = Router();
 
 router.post(
 	"/send-first-message",
 	authMiddleware,
-	async (req: Request, res: Response) => {
+	async (req: AuthRequest, res: Response) => {
 		try {
 			const { userId } = req.body;
-			const senderId = req?.userId;
+			const senderId = req?.userId ? parseInt(req.userId) : undefined;
 			if (!senderId) {
 				return res.status(401).json({ error: "Unauthorized" });
 			}
@@ -47,15 +51,37 @@ router.post(
 router.get(
 	"/contacts-list",
 	authMiddleware,
-	async (req: Request, res: Response) => {
+	async (req: AuthRequest, res: Response) => {
 		try {
-			const userId = req?.userId;
+			const userId = req.userId ? parseInt(req.userId) : undefined;
+			const userQuery = req.query.userQuery as string | undefined;
 			if (!userId) {
 				return res.status(401).json({ error: "Unauthorized" });
 			}
+
 			const contacts = await prisma.contact.findMany({
 				where: {
 					OR: [{ userAId: userId }, { userBId: userId }],
+					...(userQuery && {
+						OR: [
+							{
+								userA: {
+									OR: [
+										{ name: { contains: userQuery, mode: "insensitive" } },
+										{ email: { contains: userQuery, mode: "insensitive" } },
+									],
+								},
+							},
+							{
+								userB: {
+									OR: [
+										{ name: { contains: userQuery, mode: "insensitive" } },
+										{ email: { contains: userQuery, mode: "insensitive" } },
+									],
+								},
+							},
+						],
+					}),
 				},
 				include: {
 					userA: {
@@ -78,9 +104,8 @@ router.get(
 					},
 					roomChatId: {
 						orderBy: { createdAt: "desc" },
-						take: 1, //  last message only
+						take: 1,
 						select: {
-							roomChatId: true,
 							content: true,
 							createdAt: true,
 							senderId: true,
@@ -89,19 +114,18 @@ router.get(
 				},
 			});
 
-			//  Normalize response for UI
 			const formattedContacts = contacts.map((contact) => {
 				const isUserA = contact.userAId === userId;
 				const otherUser = isUserA ? contact.userB : contact.userA;
 
 				return {
-					contactId: contact.id, // roomChatId
+					contactId: contact.id,
 					userId: otherUser.id,
 					name: otherUser.name,
 					imageURL: otherUser.imageURL,
-					lastMessage: contact.roomChatId[0] || null,
 					email: otherUser.email,
 					about: otherUser.about,
+					lastMessage: contact.roomChatId[0] || null,
 				};
 			});
 
@@ -117,11 +141,11 @@ router.get(
 router.get(
 	"/messages/:roomChatId",
 	authMiddleware,
-	async (req: Request, res: Response) => {
+	async (req: AuthRequest, res: Response) => {
 		try {
 			const { roomChatId } = req.params;
 			const { around } = req.query;
-			const userId = req?.userId;
+			const userId = req?.userId ? parseInt(req.userId) : undefined;
 
 			if (!userId) {
 				return res.status(401).json({ error: "Unauthorized" });
@@ -222,11 +246,11 @@ router.get(
 router.get(
 	"/search/:roomChatId/:query",
 	authMiddleware,
-	async (req: Request, res: Response) => {
+	async (req: AuthRequest, res: Response) => {
 		try {
 			const { roomChatId, query } = req.params;
 			const topK = "10";
-			const userId = req?.userId;
+			const userId = req?.userId ? parseInt(req.userId) : undefined;
 
 			if (!userId) {
 				return res.status(401).json({ error: "Unauthorized" });

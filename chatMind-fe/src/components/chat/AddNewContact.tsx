@@ -13,6 +13,7 @@ const AddNewContact = () => {
 	const { toast } = useToast();
 	const [isOpen, setIsOpen] = useState(false);
 	const [email, setEmail] = useState("");
+	const [errorMessage, setErrorMessage] = useState("");
 	const debouncedEmail = useDebounce(email, 2000);
 	const {
 		data: newContacts,
@@ -21,12 +22,22 @@ const AddNewContact = () => {
 	} = useQuery({
 		queryKey: ["new-contacts", debouncedEmail],
 		queryFn: async () => {
-			const { data } = await api.get(
+			setErrorMessage("");
+			const response = await api.get(
 				`/user/search/new-contacts/${debouncedEmail}`
 			);
-			return data;
+			if (response.status === 204) {
+				setErrorMessage("No users found with this email.");
+				toast({
+					title: "Error",
+					description: "No users found with this email.",
+					variant: "destructive",
+				});
+				return { users: [] };
+			}
+			return response.data;
 		},
-		enabled: Boolean(debouncedEmail), // 👈 prevents empty calls
+		enabled: Boolean(debouncedEmail),
 		staleTime: 5 * 60 * 1000,
 	});
 
@@ -39,6 +50,12 @@ const AddNewContact = () => {
 			});
 		}
 	}, [isError, debouncedEmail, newContacts]);
+
+	useEffect(() => {
+		if (email === "") {
+			setErrorMessage("");
+		}
+	}, [email]);
 
 	return (
 		<>
@@ -64,6 +81,10 @@ const AddNewContact = () => {
 					</div>
 
 					<div className="p-4 border-t border-border h-96 overflow-auto">
+						{errorMessage && (
+							<p className="text-center text-red-500 mt-10">{errorMessage}</p>
+						)}
+
 						{newContacts?.users?.map((contact: any) => {
 							return (
 								<div

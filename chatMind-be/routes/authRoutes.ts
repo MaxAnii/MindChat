@@ -6,6 +6,7 @@ import { createRateLimiter } from "../middleware/rateLimiter";
 import authMiddleware from "../middleware/authMiddleware";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
+import { OAuth2Client } from "google-auth-library";
 
 dotenv.config();
 const router = Router();
@@ -57,7 +58,7 @@ router.post(
 			console.error(err);
 			return res.status(500).json({ message: "Internal server error" });
 		}
-	}
+	},
 );
 
 router.post(
@@ -92,7 +93,7 @@ router.post(
 			console.error(err);
 			return res.status(500).json({ message: "Internal server error" });
 		}
-	}
+	},
 );
 
 // Verify endpoint: user clicks link from email -> frontend calls this endpoint
@@ -141,7 +142,7 @@ router.post("/verify", async (req: Request, res: Response) => {
 		const accessToken = jwt.sign(
 			{ userId: dbToken.userId },
 			process.env.JWT_SECRET || "secret",
-			{ expiresIn: "15m" }
+			{ expiresIn: "15m" },
 		);
 
 		// send cookies: httpOnly access token (short) and refresh token (httpOnly) to renew
@@ -186,7 +187,7 @@ router.post("/refresh", async (req: Request, res: Response) => {
 		const accessToken = jwt.sign(
 			{ userId: session.userId },
 			process.env.JWT_SECRET || "secret",
-			{ expiresIn: "15m" }
+			{ expiresIn: "15m" },
 		);
 		res.cookie("access_token", accessToken, {
 			httpOnly: true,
@@ -244,5 +245,122 @@ router.get("/me", authMiddleware, async (req: any, res: Response) => {
 		return res.status(500).json({ message: "Internal server error" });
 	}
 });
+
+// Google OAuth endpoint
+router.post(
+	"/google",
+	createRateLimiter({ windowMs: 60 * 1000, max: 10 }),
+	async (req: Request, res: Response) => {
+		try {
+			const { token } = req.body;
+			if (!token)
+				return res.status(400).json({ message: "Google token required" });
+
+			// Initialize Google OAuth2 client
+			// Note: We use a dummy redirect_uri since we're doing direct code exchange,
+			// not redirecting the user. It must match what's registered in Google Cloud Console.
+			const client = new OAuth2Client(
+				process.env.GOOGLE_CLIENT_ID || "",
+				process.env.GOOGLE_CLIENT_SECRET || "",
+				process.env.GOOGLE_REDIRECT_URI ||
+					"http://localhost:3000/auth/google/callback",
+			);
+
+			// Exchange authorization code for tokens
+			const { tokens } = await client.getToken(token);
+			client.setCredentials(tokens);
+
+			// Verify the ID token
+			const ticket = await client.verifyIdToken({
+				idToken: tokens.id_token || "",
+				audience: process.env.GOOGLE_CLIENT_ID,
+			});
+
+			const payload = ticket.getPayload();
+			if (!payload)
+				return res.status(400).json({ message: "Invalid Google token" });
+
+			const { sub: googleId, email, name, picture } = payload;
+
+			// Find or create user
+			let user = await prisma.user.findFirst({
+				where: {
+					OR: [{ googleId }, { email }],
+				},
+			});
+
+			if (!user) {
+				// Create new user
+				user = await prisma.user.create({
+					data: {
+						email: email || "",
+						name: name || "User",
+						googleId,
+						imageURL: picture || "",
+						about: " ",
+						isVerified: true, // Google users are verified
+					},
+				});
+			} else if (!user.googleId) {
+				// Update existing user with Google ID if they don't have one
+				user = await prisma.user.update({
+					where: { id: user.id },
+					data: {
+						googleId,
+						isVerified: true,
+						imageURL: picture || user.imageURL,
+					},
+				});
+			}
+
+			// Create session
+			const refreshToken = createRandomToken(48);
+			const refreshTokenHash = hashToken(refreshToken);
+
+			const session = await prisma.session.create({
+				data: {
+					userId: user.id,
+					refreshTokenHash,
+					expiresAt: new Date(Date.now() + SESSION_TTL_MS),
+				},
+			});
+
+			// Create access JWT
+			const accessToken = jwt.sign(
+				{ userId: user.id },
+				process.env.JWT_SECRET || "secret",
+				{ expiresIn: "15m" },
+			);
+
+			// Set cookies
+			res.cookie("access_token", accessToken, {
+				httpOnly: true,
+				secure: process.env.NODE_ENV === "production",
+				sameSite: "lax",
+				maxAge: 15 * 60 * 1000,
+			});
+
+			res.cookie("refresh_token", refreshToken, {
+				httpOnly: true,
+				secure: process.env.NODE_ENV === "production",
+				sameSite: "lax",
+				maxAge: SESSION_TTL_MS,
+			});
+
+			return res.status(200).json({
+				message: "Google authentication successful",
+				user: {
+					id: user.id,
+					email: user.email,
+					name: user.name,
+					imageURL: user.imageURL,
+				},
+			});
+		} catch (err: any) {
+			console.error("Google auth error:", err);
+			return res.status(401).json({ message: "Google authentication failed" });
+		}
+	},
+);
 
 export default router;

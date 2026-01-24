@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { magicLinkEmailTemplate } from "../utils/magicLinkEmailTemplate";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -7,15 +8,18 @@ const resend = new Resend(process.env.RESEND_API_KEY!);
 
 const sendAuthEmail = async (to: string, link: string) => {
 	try {
-		await resend.emails.send({
-			from: process.env.SENDER_EMAIL!,
-			to: to,
-			replyTo: process.env.SENDER_EMAIL!,
-			subject: "Login to Mind Chat",
-			html: `<p>Click the link below to sign in (valid for 5 minutes):</p><p><a href="${link}">${link}</a></p>`,
-		});
+		const { data, error } = await resend.emails.send({
+			from: "onboarding@resend.dev",
+			to: [to],
 
-		console.log("Authentication email sent successfully to", to);
+			subject: "Login to Mind Chat",
+			html: magicLinkEmailTemplate(link),
+		});
+		if (error) {
+			console.error("Error sending email:", error);
+			return;
+		}
+		console.log("Authentication email sent successfully to", to, data);
 	} catch (error) {
 		console.error("Error sending email:", error);
 	}

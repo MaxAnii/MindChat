@@ -4,16 +4,21 @@ import useMessaging from "@/hooks/useMessaging";
 
 const UserInfoHeader = () => {
 	const { receiverData } = useReciverData();
-	const { isUserOnline } = useMessaging();
+	const { isUserOnline, isUserTyping } = useMessaging();
+
 	return (
-		<header className="h-14 border-b border-border  flex items-center px-4 gap-3">
+		<header className="h-16 border-b border-border  flex items-center px-4 gap-3">
 			<ReceiverDataProfile receiverData={receiverData} />
 			<div>
 				<p className="font-medium leading-tight">{receiverData?.name}</p>
-				{isUserOnline(receiverData?.id!) ? (
+				{isUserOnline(receiverData?.userId!) ? (
 					<div className="flex items-center gap-1">
 						<div className="h-2 w-2 rounded-full bg-primary" />
-						<p className="text-xs text-primary">Online</p>
+						{isUserTyping(receiverData?.userId!) ? (
+							<p className="text-xs text-primary">Typing...</p>
+						) : (
+							<p className="text-xs text-primary">Online</p>
+						)}
 					</div>
 				) : (
 					<div className="flex items-center gap-1">

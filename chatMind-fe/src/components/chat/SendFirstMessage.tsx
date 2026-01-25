@@ -3,9 +3,10 @@ import { Button } from "../ui/button";
 import { useMutation } from "@tanstack/react-query";
 import api from "@/utils/axios";
 import { useToast } from "@/hooks/use-toast";
+import useReciverData from "@/hooks/use-reciver-data";
 const SendFirstMessage = ({ userId }: { userId: string }) => {
 	const { toast } = useToast();
-
+	const { setFetchContactsList } = useReciverData();
 	const sendFirstMessageMutation = useMutation({
 		mutationFn: async () => {
 			const res = await api.post("/chat/send-first-message", { userId });
@@ -16,6 +17,7 @@ const SendFirstMessage = ({ userId }: { userId: string }) => {
 				title: "Success",
 				description: "User added successfully.",
 			});
+			setFetchContactsList((prev) => !prev);
 		},
 		onError: () => {
 			toast({

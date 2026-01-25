@@ -26,13 +26,11 @@ const ChatLayout = ({
 	return (
 		<>
 			<div className=" bg-blue-200/50  py-1 flex items-center px-4 justify-between h-12">
-				{roomChatId && onSearchResultClick ? (
+				{roomChatId && onSearchResultClick && (
 					<ChatSerachBar
 						roomChatId={roomChatId}
 						onResultClick={onSearchResultClick}
 					/>
-				) : (
-					<ChatSerachBar roomChatId={1} />
 				)}
 			</div>
 			<div className="h-[calc(100vh-3rem)] flex overflow-hidden bg-background">

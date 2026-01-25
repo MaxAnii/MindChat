@@ -36,6 +36,7 @@ const ChatWindow = forwardRef<ChatWindowHandle, ChatWindowProps>(
 		const typingTimeoutRef = useRef<NodeJS.Timeout>();
 		const messagesContainerRef = useRef<HTMLDivElement>(null);
 		const messageRefsMap = useRef<Map<number, HTMLDivElement>>(new Map());
+		const hasScrolledToBottomRef = useRef(false);
 
 		// Get current user
 		const { data: currentUser } = useQuery({
@@ -47,26 +48,43 @@ const ChatWindow = forwardRef<ChatWindowHandle, ChatWindowProps>(
 			retry: false,
 		});
 
-		const {
-			messages,
-			loadMessages,
-			sendMessage,
-			handleTyping,
-			isUserTyping,
-			setMessages,
-		} = useMessaging();
+		const { messages, loadMessages, sendMessage, handleTyping, setMessages } =
+			useMessaging();
+
+		// Scroll to bottom function
+		const scrollToBottom = useCallback(() => {
+			if (messagesContainerRef.current) {
+				messagesContainerRef.current.scrollTop =
+					messagesContainerRef.current.scrollHeight;
+			}
+		}, []);
 
 		// Load messages on component mount or when room changes
 		useEffect(() => {
 			loadMessages(roomChatId);
+			hasScrolledToBottomRef.current = false;
 		}, [roomChatId, loadMessages]);
+
+		// Auto-scroll to bottom when messages are loaded for the first time
+		useEffect(() => {
+			const roomMessages = messages.filter(
+				(msg) => msg.roomChatId === roomChatId,
+			);
+
+			if (roomMessages.length > 0 && !hasScrolledToBottomRef.current) {
+				// Use setTimeout to ensure DOM is updated
+
+				scrollToBottom();
+				hasScrolledToBottomRef.current = true;
+			}
+		}, [messages, roomChatId, scrollToBottom]);
 
 		// Load messages around a specific message ID
 		const loadMessagesAroundId = useCallback(
 			async (messageId: number) => {
 				try {
 					const response = await api.get(
-						`/chat/messages/${roomChatId}?around=${messageId}`
+						`/chat/messages/${roomChatId}?around=${messageId}`,
 					);
 					// Merge new messages with existing ones, avoiding duplicates
 					setMessages((prevMessages) => {
@@ -75,14 +93,14 @@ const ChatWindow = forwardRef<ChatWindowHandle, ChatWindowProps>(
 						return Array.from(messageMap.values()).sort(
 							(a, b) =>
 								new Date(a.createdAt).getTime() -
-								new Date(b.createdAt).getTime()
+								new Date(b.createdAt).getTime(),
 						);
 					});
 				} catch (error) {
 					console.error("Error loading messages around ID:", error);
 				}
 			},
-			[roomChatId, setMessages]
+			[roomChatId, setMessages],
 		);
 
 		// Expose scroll function via ref
@@ -114,7 +132,7 @@ const ChatWindow = forwardRef<ChatWindowHandle, ChatWindowProps>(
 					}
 				},
 			}),
-			[loadMessagesAroundId]
+			[loadMessagesAroundId],
 		);
 
 		// Handle message input with typing indicator
@@ -151,15 +169,18 @@ const ChatWindow = forwardRef<ChatWindowHandle, ChatWindowProps>(
 			// Stop typing indicator
 			setIsTyping(false);
 			handleTyping(receiverId, false);
+
+			// Scroll to bottom after sending
+			setTimeout(scrollToBottom, 100);
 		};
 
 		// Filter messages for this room
 		const roomMessages = messages.filter(
-			(msg) => msg.roomChatId === roomChatId
+			(msg) => msg.roomChatId === roomChatId,
 		);
 
 		return (
-			<div className="flex flex-col h-full bg-white rounded-lg shadow">
+			<div className="flex flex-col h-full bg-white  shadow">
 				<UserInfoHeader />
 				{/* Messages Container */}
 				<div
@@ -189,36 +210,24 @@ const ChatWindow = forwardRef<ChatWindowHandle, ChatWindowProps>(
 									<IncomingMessage
 										message={message.content}
 										MessageTime={new Date(
-											message.createdAt
+											message.createdAt,
 										).toLocaleTimeString()}
 									/>
 								) : (
 									<OutgoingMessage
 										message={message.content}
 										MessageTime={new Date(
-											message.createdAt
+											message.createdAt,
 										).toLocaleTimeString()}
 									/>
 								)}
 							</div>
 						))
 					)}
-
-					{/* Typing Indicator */}
-					{isUserTyping(receiverId) && (
-						<div className="flex items-center space-x-2 text-gray-500 mt-2 h-10 rounded-full pb-3 px-2">
-							<span className="text-sm">{receiverName} is typing</span>
-							<div className="flex space-x-1">
-								<div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-								<div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
-								<div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
-							</div>
-						</div>
-					)}
 				</div>
 
 				{/* Input Area */}
-				<form
+				<div
 					onSubmit={handleSendMessage}
 					className="p-4 border-t flex gap-2 mt-4 items-center"
 				>
@@ -226,20 +235,26 @@ const ChatWindow = forwardRef<ChatWindowHandle, ChatWindowProps>(
 						placeholder="Type a message..."
 						value={messageInput}
 						onChange={(e) => handleInputChange(e)}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" && !e.shiftKey) {
+								e.preventDefault();
+								handleSendMessage(e);
+							}
+						}}
 						className="flex-1"
 						required
 					/>
 					<Button
-						type="submit"
+						onClick={handleSendMessage}
 						size="icon"
 						className="gradient-primary shadow-primary"
 					>
 						<Send className="h-4 w-4" />
 					</Button>
-				</form>
+				</div>
 			</div>
 		);
-	}
+	},
 );
 
 ChatWindow.displayName = "ChatWindow";

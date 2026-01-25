@@ -23,7 +23,7 @@ const DirectMessage = () => {
 			<>
 				<ChatWindow
 					ref={chatWindowRef}
-					receiverId={receiverData?.id!}
+					receiverId={receiverData?.userId!}
 					receiverName={receiverData?.name!}
 					roomChatId={parseInt(params?.roomId!)}
 				/>

@@ -27,10 +27,7 @@ export const initializeSocketIO = async (httpServer: HTTPServer) => {
 	const redisHost = String(rawRedisHost).replace(/^['\"]|['\"]$/g, "");
 	const redisPort = parseInt(
 		String(rawRedisPort).replace(/^['\"]|['\"]$/g, ""),
-		10
-	);
-	console.log(
-		`Connecting to Redis at ${redisHost}:${redisPort} for Socket.IO adapter`
+		10,
 	);
 
 	// Create Redis clients
@@ -143,9 +140,6 @@ export const initializeSocketIO = async (httpServer: HTTPServer) => {
 		// Handle typing indicator
 		socket.on("userTyping", (data: any) => {
 			const { receiverId, isTyping } = data;
-			console.log(
-				`userTyping received from ${userId} -> ${receiverId}: ${isTyping}`
-			);
 			io.to(`user:${receiverId}`).emit("userTyping", {
 				senderId: userId,
 				isTyping,
@@ -174,13 +168,12 @@ export const initializeSocketIO = async (httpServer: HTTPServer) => {
 			(async () => {
 				try {
 					await pubClient.sRem(`userSockets:${userId}`, socket.id);
-					const remaining = await pubClient.sCard(`userSockets:${userId}`);
+
 					io.emit("userOffline", userId);
-					if (remaining === 0) {
-						// No more sockets for this user — consider them offline
-						await pubClient.sRem(`online_users`, String(userId));
-						await pubClient.del(`userSockets:${userId}`);
-					}
+
+					// No more sockets for this user — consider them offline
+					await pubClient.sRem(`online_users`, String(userId));
+					await pubClient.del(`userSockets:${userId}`);
 				} catch (err) {
 					console.error("Error cleaning socket id from Redis:", err);
 				}

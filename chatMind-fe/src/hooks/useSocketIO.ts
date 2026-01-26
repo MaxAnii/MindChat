@@ -36,7 +36,7 @@ export const useSocketIO = ({
 
 		// create or reuse a shared socket across hook instances
 		if (!sharedSocket) {
-			sharedSocket = io("http://localhost:3000", {
+			sharedSocket = io(import.meta.env.VITE_BACKEND_URL, {
 				auth: {
 					userId: currentUser.id,
 					token: "placeholder",
@@ -132,7 +132,7 @@ export const useSocketIO = ({
 				});
 			}
 		},
-		[]
+		[],
 	);
 
 	// Send typing indicator
@@ -155,7 +155,7 @@ export const useSocketIO = ({
 				});
 			}
 		},
-		[]
+		[],
 	);
 
 	// Get socket instance

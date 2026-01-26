@@ -24,15 +24,11 @@ const AddNewContact = () => {
 		queryFn: async () => {
 			setErrorMessage("");
 			const response = await api.get(
-				`/user/search/new-contacts/${debouncedEmail}`
+				`/user/search/new-contacts/${debouncedEmail}`,
 			);
-			if (response.status === 204) {
+			if (response.status === 204 || response.data.users.length === 0) {
 				setErrorMessage("No users found with this email.");
-				toast({
-					title: "Error",
-					description: "No users found with this email.",
-					variant: "destructive",
-				});
+
 				return { users: [] };
 			}
 			return response.data;

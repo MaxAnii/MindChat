@@ -43,7 +43,7 @@ router.post(
 			console.error("Error updating profile:", error);
 			return res.status(500).json({ error: "Internal server error" });
 		}
-	}
+	},
 );
 
 router.get(
@@ -104,12 +104,14 @@ router.get(
 				});
 			}
 
-			return res.status(200).json({ users });
+			return res
+				.status(200)
+				.json({ users: users.filter((u) => u.id !== currentUserId) });
 		} catch (err) {
 			console.error("Search contact error:", err);
 			return res.status(500).json({ message: "Internal server error" });
 		}
-	}
+	},
 );
 
 export default router;

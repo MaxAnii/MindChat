@@ -158,7 +158,7 @@ cd MindChat
 Navigate to the backend directory:
 
 ```bash
-cd chatMind-be
+cd backend
 ```
 
 #### Install Dependencies
@@ -171,7 +171,7 @@ bun install
 
 #### Configure Environment Variables
 
-Create a `.env` file in the `chatMind-be` directory:
+Create a `.env` file in the `backend` directory:
 
 ```env
 # Get these from Google Cloud Console
@@ -236,7 +236,7 @@ npm run consumer
 In a new terminal, navigate to the frontend directory:
 
 ```bash
-cd chatMind-fe
+cd frontend
 ```
 
 #### Install Dependencies
@@ -249,7 +249,7 @@ bun install
 
 #### Configure Environment Variables
 
-Create a `.env.local` file in the `chatMind-fe` directory:
+Create a `.env.local` file in the `frontend` directory:
 
 ```env
 
@@ -318,7 +318,7 @@ npm run preview      # Preview production build locally
 
 ```
 MindChat/
-├── chatMind-be/                 # Backend application
+├── backend/                 # Backend application
 │   ├── controllers/             # Route controllers
 │   ├── lib/                     # Utilities & services
 │   │   ├── kafka.ts            # Kafka producer
@@ -336,7 +336,7 @@ MindChat/
 |   ├── package.json
 │   └── docker-compose.yml           # Docker configuration
 │
-├── chatMind-fe/                 # Frontend application
+├── frontend/                 # Frontend application
 │   ├── src/
 │   │   ├── components/          # React components
 │   │   │   ├── auth/           # Auth components

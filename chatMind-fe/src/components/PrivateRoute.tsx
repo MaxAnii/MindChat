@@ -7,23 +7,22 @@ interface PrivateRouteProps {
 	children: React.ReactNode;
 }
 
-const PrivateRoute = ({ children }: PrivateRouteProps) => {
+const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
 	const navigate = useNavigate();
-	const { data, isLoading, error } = useQuery({
+
+	const { isLoading, isError } = useQuery({
 		queryKey: ["auth", "me"],
-		queryFn: async () => {
-			const res = await api.get("/auth/me");
-			return res.data;
-		},
+		queryFn: () => api.get("/auth/me").then((res) => res.data),
 		retry: false,
 	});
 
 	useEffect(() => {
-		if (error) {
-			return navigate("/auth");
-		}
-	}, [data, isLoading, error]);
-	return <>{isLoading ? <div>Loading...</div> : children}</>;
+		if (isError) navigate("/auth");
+	}, [isError]);
+
+	if (isLoading) return <div>Loading...</div>;
+
+	return <>{children}</>;
 };
 
 export default PrivateRoute;

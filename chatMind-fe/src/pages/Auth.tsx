@@ -7,12 +7,21 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sparkles } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import SignIn from "@/components/auth/signIn";
 import SignUp from "@/components/auth/signUp";
 import SocialAuth from "@/components/auth/socialAuth";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/utils/axios";
 
 const Auth = () => {
+	const navigate = useNavigate();
+	const { isLoading, isError } = useQuery({
+		queryKey: ["auth", "me"],
+		queryFn: () => api.get("/auth/me").then((res) => navigate("/chat")),
+		retry: false,
+	});
+
 	return (
 		<div className="min-h-screen flex items-center justify-center p-4 gradient-hero">
 			<div className="w-full max-w-md">

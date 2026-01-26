@@ -21,6 +21,7 @@ type ReceiverDataContextType = {
 	setQueryKey: React.Dispatch<React.SetStateAction<string>>;
 	contactsList: { contacts: ReceiverData[] };
 	setFetchContactsList: React.Dispatch<React.SetStateAction<boolean>>;
+	isLoading: boolean;
 };
 
 const ReciverDataContext = createContext<ReceiverDataContextType>({
@@ -30,6 +31,7 @@ const ReciverDataContext = createContext<ReceiverDataContextType>({
 	setQueryKey: () => {},
 	contactsList: { contacts: [] },
 	setFetchContactsList: () => {},
+	isLoading: false,
 });
 
 export const ReciverDataProvider = ({
@@ -44,15 +46,21 @@ export const ReciverDataProvider = ({
 	const [receiverData, setReceiverData] = useState<ReceiverData | null>(null);
 	const [fetchContactsList, setFetchContactsList] = useState(false);
 	const { data, isLoading, isError } = useQuery({
-		queryKey: ["messages", debouncedQuery, fetchContactsList],
+		queryKey: [
+			"messages",
+			debouncedQuery,
+			fetchContactsList,
+			location.pathname,
+		],
 		queryFn: async () => {
 			const res = await api.get(
 				`/chat/contacts-list?userQuery=${debouncedQuery}`,
 			);
 			return res.data;
 		},
+		enabled: location.pathname === "/chat",
 	});
-
+	console.log(location.pathname);
 	useEffect(() => {
 		if (location.pathname.includes("/chat/") && data) {
 			const reciverId = location.pathname.split("/chat/")[1].split("/")[0];
@@ -75,6 +83,7 @@ export const ReciverDataProvider = ({
 				setQueryKey,
 				contactsList: data || [],
 				setFetchContactsList,
+				isLoading,
 			}}
 		>
 			{children}

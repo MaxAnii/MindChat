@@ -1,66 +1,67 @@
-import axios, { AxiosError } from "axios";
+import axios, { AxiosError, AxiosRequestConfig } from "axios";
 
-// Create axios instance
 const api = axios.create({
 	baseURL: "http://localhost:3000",
-	withCredentials: true, // send cookies automatically
+	withCredentials: true,
 });
 
-// Flag to avoid multiple refresh calls
 let isRefreshing = false;
+
 let failedQueue: {
 	resolve: (value?: unknown) => void;
 	reject: (reason?: unknown) => void;
 }[] = [];
 
-const processQueue = (
-	error: AxiosError | null,
-	token: string | null = null
-) => {
+const processQueue = (error: AxiosError | null) => {
 	failedQueue.forEach((prom) => {
 		if (error) prom.reject(error);
-		else prom.resolve(token);
+		else prom.resolve(true);
 	});
 	failedQueue = [];
 };
 
-// Add response interceptor
 api.interceptors.response.use(
 	(res) => res,
 	async (error: AxiosError) => {
-		const originalRequest: any = error.config;
+		const originalRequest = error.config as AxiosRequestConfig & {
+			_retry?: boolean;
+		};
 
-		// If it's not 401 OR the refresh endpoint itself, reject normally
-		if (error.response?.status !== 401 || originalRequest._retry) {
+		//  Not a 401 OR already retried OR refresh request itself
+		if (
+			error.response?.status !== 401 ||
+			originalRequest._retry ||
+			originalRequest.url?.includes("/auth/refresh")
+		) {
 			return Promise.reject(error);
 		}
 
-		// Mark request as retried
 		originalRequest._retry = true;
 
-		// Only one refresh request at a time
+		//  If refresh already in progress, queue request
 		if (isRefreshing) {
 			return new Promise((resolve, reject) => {
 				failedQueue.push({ resolve, reject });
-			})
-				.then(() => api(originalRequest))
-				.catch((err) => Promise.reject(err));
+			}).then(() => api(originalRequest));
 		}
 
 		isRefreshing = true;
 
 		try {
-			await api.post("/auth/refresh"); // hits backend to refresh tokens
+			await api.post("/auth/refresh", {}, { withCredentials: true });
 
-			processQueue(null, null);
-			return api(originalRequest); // retry original request
+			processQueue(null);
+			return api(originalRequest);
 		} catch (refreshError) {
-			processQueue(refreshError as AxiosError, null);
-			throw refreshError;
+			processQueue(refreshError as AxiosError);
+
+			//  Refresh failed → force logout
+			// window.location.href = "/auth";
+			return Promise.reject(refreshError);
 		} finally {
 			isRefreshing = false;
 		}
-	}
+	},
 );
 
 export default api;

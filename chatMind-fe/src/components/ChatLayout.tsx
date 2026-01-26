@@ -17,7 +17,7 @@ const ChatLayout = ({
 	onSearchResultClick,
 }: ChatLayoutProps) => {
 	const navigate = useNavigate();
-	const { setQueryKey, contactsList } = useReciverData();
+	const { setQueryKey, contactsList, isLoading } = useReciverData();
 
 	const handleDMNavigation = (userData) => {
 		navigate(`/chat/${userData.userId}/${userData.contactId}`);
@@ -51,25 +51,33 @@ const ChatLayout = ({
 						</p>
 
 						<div className="space-y-1">
-							{contactsList?.contacts?.map((i: ReceiverData) => (
-								<div
-									key={i.email}
-									className="flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer hover:bg-muted transition"
-									onClick={() => handleDMNavigation(i)}
-								>
-									<img
-										src={i?.imageURL}
-										className="bg-gray-200 border-2 border-dashed rounded-xl w-10 h-10"
-									/>
+							{isLoading ? (
+								<p className="text-center text-gray-500 mt-10">Loading...</p>
+							) : contactsList?.contacts?.length === 0 ? (
+								<p className="text-center text-gray-500 mt-10">
+									No contacts found.
+								</p>
+							) : (
+								contactsList?.contacts?.map((i: ReceiverData) => (
+									<div
+										key={i.email}
+										className="flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer hover:bg-muted transition"
+										onClick={() => handleDMNavigation(i)}
+									>
+										<img
+											src={i?.imageURL}
+											className="bg-gray-200 border-2 border-dashed rounded-xl w-10 h-10"
+										/>
 
-									<div className="flex-1 min-w-0">
-										<p className="text-sm font-medium truncate">{i.name}</p>
-										<p className="text-xs text-muted-foreground truncate">
-											{i?.lastMessage?.content}
-										</p>
+										<div className="flex-1 min-w-0">
+											<p className="text-sm font-medium truncate">{i.name}</p>
+											<p className="text-xs text-muted-foreground truncate">
+												{i?.lastMessage?.content}
+											</p>
+										</div>
 									</div>
-								</div>
-							))}
+								))
+							)}
 						</div>
 					</div>
 				</aside>

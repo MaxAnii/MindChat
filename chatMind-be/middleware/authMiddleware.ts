@@ -3,12 +3,13 @@ import jwt from "jsonwebtoken";
 
 interface AuthRequest extends Request {
 	userId?: string;
+	userEmail?: string;
 }
 
 const authMiddleware = (
 	req: AuthRequest,
 	res: Response,
-	next: NextFunction
+	next: NextFunction,
 ) => {
 	const token = req.cookies["access_token"];
 	if (!token) {
@@ -18,6 +19,7 @@ const authMiddleware = (
 	try {
 		const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret") as {
 			userId: string;
+			userEmail: string;
 		};
 		req.userId = decoded.userId;
 		req.userEmail = decoded.userEmail;

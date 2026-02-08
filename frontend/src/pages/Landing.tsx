@@ -76,7 +76,7 @@ const Landing = () => {
 	return (
 		<div className="min-h-screen bg-background text-foreground">
 			{/* Hero */}
-			<section className="relative overflow-hidden py-24 bg-hero flex pt-20 h-[80vh]">
+			<section className="relative overflow-hidden py-24 bg-hero flex pt-28 h-[75vh] ">
 				<div className="absolute -left-32 -top-32 w-72 h-72 bg-gradient-to-br from-primary/30 to-transparent rounded-full blur-3xl opacity-20 transform rotate-45" />
 				<div className="absolute right-[-120px] top-20 w-56 h-56 bg-gradient-to-br from-secondary/30 to-transparent rounded-full blur-2xl opacity-15" />
 

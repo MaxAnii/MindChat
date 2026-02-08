@@ -31,7 +31,7 @@ const Auth = () => {
 						className="inline-flex items-center gap-2 text-primary hover:opacity-80 transition-smooth"
 					>
 						<Sparkles className="h-6 w-6" />
-						<span className="text-2xl font-display font-bold">ChatApp</span>
+						<span className="text-2xl font-display font-bold">Mind Chat</span>
 					</Link>
 				</div>
 

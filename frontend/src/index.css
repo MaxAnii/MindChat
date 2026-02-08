@@ -137,3 +137,15 @@ All colors MUST be HSL.
 		transition: var(--transition-smooth);
 	}
 }
+
+body {
+	background-color: #f0f0f0;
+}
+
+.bg-hero {
+	background-color: #e5e5f7;
+
+	background-image:
+		repeating-radial-gradient(circle at 0 0, transparent 0, #ffffff 20px),
+		repeating-linear-gradient(10deg, #fafdff93, #daedff);
+}
